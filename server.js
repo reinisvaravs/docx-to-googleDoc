@@ -103,5 +103,3 @@ app.post("/convert-docx", async (req, res) => {
 app.listen(PORT, () => {
   console.log(`API server running at http://localhost:${PORT}`);
 });
-
-convertDocxTest("1qRJQ3Umz2XTwo2XAC5tKv29-BqiLQ4HX", "1sJi6_nzSbpBzOBc1jhdtUKFafGozL89Q")
