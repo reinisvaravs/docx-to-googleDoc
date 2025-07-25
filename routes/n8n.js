@@ -8,7 +8,7 @@ const router = express.Router();
 const API_SECRET = process.env.API_SECRET;
 const DRIVE_ID = process.env.DRIVE_ID;
 
-router.post("/convert-docx", async (req, res) => {
+router.post("/convert-all-docx", async (req, res) => {
   console.log(`[API] POST /convert-docx received. Body:`, req.body);
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || apiKey !== API_SECRET) {

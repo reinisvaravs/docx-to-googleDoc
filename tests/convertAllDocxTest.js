@@ -2,32 +2,29 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
-export async function listDocs(folderId) {
+export async function convertAllDocxTest(sourceFolder, destFolder) {
+  const sourceFolderId = sourceFolder;
+  const destFolderId = destFolder;
+
   try {
     const response = await fetch(
       `${
         process.env.DEV ? process.env.DEV_URL : process.env.PROD_URL
-      }/list-folder`,
+      }/convert-all-docx`,
       {
         method: "POST",
         headers: {
           "x-api-key": process.env.API_SECRET,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ folderId: folderId }),
+        body: JSON.stringify({ from: sourceFolderId, to: destFolderId }),
       }
     );
 
-    const contentType = response.headers.get("content-type");
-    if (
-      response.ok &&
-      contentType &&
-      contentType.includes("application/json")
-    ) {
-      const result = await response.json();
-      console.log("Success:", result);
+    const text = await response.text();
+    if (response.ok) {
+      console.log("Success:", text);
     } else {
-      const text = await response.text();
       console.error(`Error ${response.status}:`, text);
     }
   } catch (err) {
@@ -35,4 +32,4 @@ export async function listDocs(folderId) {
   }
 }
 
-listDocs(process.env.SETINBOUND_DOCS);
+convertAllDocxTest(process.env.SETINBOUND_FOLDER, process.env.SETINBOUND_DOCS);
