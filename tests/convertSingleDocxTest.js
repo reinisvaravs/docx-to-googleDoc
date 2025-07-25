@@ -11,7 +11,7 @@ export async function convertSingleDocxTest(sourceFolder, destFolder, fileId) {
     const response = await fetch(
       `${
         process.env.DEV ? process.env.DEV_URL : process.env.PROD_URL
-      }/convert-single-docx`,
+      }/convert-docx`,
       {
         method: "POST",
         headers: {
