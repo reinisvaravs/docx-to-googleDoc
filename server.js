@@ -3,11 +3,6 @@ dotenv.config();
 import express from "express";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
-import { dirname } from "path";
-import { fileURLToPath } from "url";
-import { convertDocxTest } from "./test.js";
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(express.json());
