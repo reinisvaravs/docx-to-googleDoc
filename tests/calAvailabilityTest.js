@@ -2,12 +2,7 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
-export async function calAvailabilityTest(
-  utcOffset = "+3",
-  days = 7,
-  workStartHour = "9",
-  workEndHour = "17"
-) {
+export async function calAvailabilityTest() {
   try {
     const response = await fetch(
       `${
@@ -19,12 +14,6 @@ export async function calAvailabilityTest(
           "x-api-key": process.env.API_SECRET,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          utcOffset,
-          days,
-          workStartHour,
-          workEndHour,
-        }),
       }
     );
 
