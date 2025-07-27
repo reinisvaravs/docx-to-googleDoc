@@ -2,19 +2,31 @@ import fetch from "node-fetch";
 import dotenv from "dotenv";
 dotenv.config();
 
-export async function listFolderTest(folderId) {
+export async function calAvailabilityTest(
+  utcOffset = "+3",
+  days = 7,
+  calendarEmail = "hello@setinbound.com",
+  workStartHour = "9",
+  workEndHour = "17"
+) {
   try {
     const response = await fetch(
       `${
         process.env.DEV ? process.env.DEV_URL : process.env.PROD_URL
-      }/n8n/list-folder`,
+      }/n8n/calendar-availability`,
       {
         method: "POST",
         headers: {
           "x-api-key": process.env.API_SECRET,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ folderId: folderId }),
+        body: JSON.stringify({
+          utcOffset,
+          days,
+          calendarEmail,
+          workStartHour,
+          workEndHour,
+        }),
       }
     );
 
@@ -35,4 +47,4 @@ export async function listFolderTest(folderId) {
   }
 }
 
-listFolderTest(process.env.SETINBOUND_DOCS);
+calAvailabilityTest();

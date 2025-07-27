@@ -1,6 +1,10 @@
 import express from "express";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
+import {
+  formattedCalendarAvailability,
+  minimalCalendarAvailability,
+} from "../gCalendar.js";
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -120,6 +124,44 @@ router.post("/convert-docx", async (req, res) => {
   } catch (err) {
     console.error("[API] Error in /convert-single-docx:", err.stack || err);
     res.status(500).send("Error: " + (err.stack || err.message || err));
+  }
+});
+
+router.post("/calendar-availability", async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || apiKey !== API_SECRET) {
+    return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  const { utcOffset, days, calendarEmail, workStartHour, workEndHour } =
+    req.body;
+
+  if (!utcOffset || !days || !calendarEmail || !workStartHour || !workEndHour) {
+    return res
+      .status(400)
+      .send(
+        "Missing required parameters: utcOffset, days, calendarEmail, workStartHour, workEndHour"
+      );
+  }
+
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    const result = await formattedCalendarAvailability(
+      utcOffset,
+      days,
+      credentials,
+      calendarEmail,
+      workStartHour,
+      workEndHour
+    );
+
+    const minimalResult = minimalCalendarAvailability(result);
+    console.log("Calendar availability:", minimalResult);
+
+    res.status(200).json(minimalResult);
+  } catch (error) {
+    console.error("Error testing calendar availability:", error);
+    res.status(500).json({ error: error.message });
   }
 });
 
