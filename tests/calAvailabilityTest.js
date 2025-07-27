@@ -5,7 +5,6 @@ dotenv.config();
 export async function calAvailabilityTest(
   utcOffset = "+3",
   days = 7,
-  calendarEmail = "hello@setinbound.com",
   workStartHour = "9",
   workEndHour = "17"
 ) {
@@ -23,7 +22,6 @@ export async function calAvailabilityTest(
         body: JSON.stringify({
           utcOffset,
           days,
-          calendarEmail,
           workStartHour,
           workEndHour,
         }),

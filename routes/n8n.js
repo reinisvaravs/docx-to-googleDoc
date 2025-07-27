@@ -133,16 +133,14 @@ router.post("/calendar-availability", async (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  const { utcOffset, days, calendarEmail, workStartHour, workEndHour } =
-    req.body;
+  // Set default values for parameters
+  const { utcOffset = "+3", days = 3 } = req.body;
 
-  if (!utcOffset || !days || !calendarEmail || !workStartHour || !workEndHour) {
-    return res
-      .status(400)
-      .send(
-        "Missing required parameters: utcOffset, days, calendarEmail, workStartHour, workEndHour"
-      );
-  }
+  const currentlyConsts = {
+    email: "hello@setinbound.com",
+    workStartHour: "9",
+    workEndHour: "17",
+  };
 
   try {
     const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
@@ -150,9 +148,9 @@ router.post("/calendar-availability", async (req, res) => {
       utcOffset,
       days,
       credentials,
-      calendarEmail,
-      workStartHour,
-      workEndHour
+      currentlyConsts.email,
+      currentlyConsts.workStartHour,
+      currentlyConsts.workEndHour
     );
 
     const minimalResult = minimalCalendarAvailability(result);
