@@ -42,6 +42,7 @@ async function getDriveClient() {
   return google.drive({ version: "v3", auth });
 }
 
+// .docx to Google Doc
 router.post("/convert-docx", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || apiKey !== API_SECRET) {
@@ -99,6 +100,7 @@ router.post("/convert-docx", async (req, res) => {
   }
 });
 
+// Convert audio file to specified format
 router.post("/convert-audio", upload.single("file"), (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || apiKey !== API_SECRET) {
@@ -185,6 +187,63 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
     .save(outputPath);
 });
 
+// Simple file type checker
+router.post("/identify-file-type", (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || apiKey !== API_SECRET) {
+    return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  const { url } = req.body;
+  if (!url) {
+    return res.status(400).send("Missing 'url' in request body");
+  }
+
+  // Simple extension checker
+  const lowerUrl = url.toLowerCase();
+
+  // Image extensions
+  const imageExtensions = [
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".gif",
+    ".bmp",
+    ".webp",
+    ".tiff",
+    ".svg",
+  ];
+  for (const ext of imageExtensions) {
+    if (lowerUrl.includes(ext)) {
+      return res.status(200).json({ type: "image", format: ext.substring(1) });
+    }
+  }
+
+  // Audio extensions
+  const audioExtensions = [
+    ".mp3",
+    ".wav",
+    ".ogg",
+    ".m4a",
+    ".flac",
+    ".aac",
+    ".webm",
+    ".mpga",
+    ".mpeg",
+    ".oga",
+    ".opus",
+  ];
+  for (const ext of audioExtensions) {
+    if (lowerUrl.includes(ext)) {
+      return res.status(200).json({ type: "audio", format: ext.substring(1) });
+    }
+  }
+
+  // No recognized extension found
+  return res.status(200).json({ type: "unknown", format: "none" });
+});
+
+// Get calendar availability
 router.post("/calendar-availability", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || apiKey !== API_SECRET) {
