@@ -24,52 +24,6 @@ async function getDriveClient() {
   return google.drive({ version: "v3", auth });
 }
 
-router.post("/list-folder", async (req, res) => {
-  const apiKey = req.headers["x-api-key"];
-  if (!apiKey || apiKey !== API_SECRET) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-  const { folderId } = req.body;
-  if (!folderId) {
-    return res.status(400).send('Missing "folderId" in request body');
-  }
-  try {
-    const drive = await getDriveClient();
-    const filesRes = await drive.files.list({
-      q: `'${folderId}' in parents and trashed=false`,
-      fields: "files(id, name, mimeType, parents)",
-      driveId: DRIVE_ID,
-      includeItemsFromAllDrives: true,
-      supportsAllDrives: true,
-      corpora: "drive",
-    });
-    const files = filesRes.data.files.map((file) => {
-      let url;
-      if (file.mimeType === "application/vnd.google-apps.document") {
-        url = `https://docs.google.com/document/d/${file.id}/edit`;
-      } else if (file.mimeType === "application/vnd.google-apps.spreadsheet") {
-        url = `https://docs.google.com/spreadsheets/d/${file.id}/edit`;
-      } else if (file.mimeType === "application/vnd.google-apps.presentation") {
-        url = `https://docs.google.com/presentation/d/${file.id}/edit`;
-      } else {
-        url = `https://drive.google.com/file/d/${file.id}/view`;
-      }
-      // Only return id, name, mimeType, parents, url
-      return {
-        id: file.id,
-        name: file.name,
-        mimeType: file.mimeType,
-        parents: file.parents,
-        url,
-      };
-    });
-    res.status(200).json(files);
-  } catch (err) {
-    console.error("[API] Error during list-folder:", err.stack || err);
-    res.status(500).send("Error: " + (err.stack || err.message || err));
-  }
-});
-
 router.post("/convert-docx", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || apiKey !== API_SECRET) {
