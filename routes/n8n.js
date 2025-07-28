@@ -5,12 +5,30 @@ import {
   formattedCalendarAvailability,
   minimalCalendarAvailability,
 } from "../gCalendar.js";
+import multer from "multer";
+import ffmpeg from "fluent-ffmpeg";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
 
 const router = express.Router();
 const API_SECRET = process.env.API_SECRET;
 const DRIVE_ID = process.env.DRIVE_ID;
+
+// Multer configuration for file uploads
+const upload = multer({ dest: "uploads/" });
+
+// __dirname replacement for ESM
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Ensure converted folder exists
+const convertedDir = path.join(__dirname, "..", "converted");
+if (!fs.existsSync(convertedDir)) {
+  fs.mkdirSync(convertedDir, { recursive: true });
+}
 
 async function getDriveClient() {
   const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
@@ -79,6 +97,92 @@ router.post("/convert-docx", async (req, res) => {
     console.error("[API] Error in /convert-single-docx:", err.stack || err);
     res.status(500).send("Error: " + (err.stack || err.message || err));
   }
+});
+
+router.post("/convert-audio", upload.single("file"), (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || apiKey !== API_SECRET) {
+    return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  if (!req.file) {
+    return res.status(400).send("No file uploaded");
+  }
+
+  // Get output format from query parameter or default to mp3
+  const outputFormat = req.query.format || "mp3";
+
+  // Validate output format
+  const supportedFormats = [
+    "flac",
+    "m4a",
+    "mp3",
+    "mp4",
+    "mpeg",
+    "mpga",
+    "oga",
+    "ogg",
+    "wav",
+    "webm",
+  ];
+  if (!supportedFormats.includes(outputFormat)) {
+    return res.status(400).json({
+      error: `Unsupported format: ${outputFormat}. Supported formats: ${supportedFormats.join(
+        ", "
+      )}`,
+    });
+  }
+
+  const inputPath = req.file.path;
+  const outputPath = path.join(convertedDir, `${Date.now()}.${outputFormat}`);
+
+  ffmpeg(inputPath)
+    .toFormat(outputFormat)
+    .on("end", () => {
+      const fileStream = fs.createReadStream(outputPath);
+
+      // Set appropriate content type based on format
+      const contentTypes = {
+        flac: "audio/flac",
+        m4a: "audio/mp4",
+        mp3: "audio/mpeg",
+        mp4: "video/mp4",
+        mpeg: "audio/mpeg",
+        mpga: "audio/mpeg",
+        oga: "audio/ogg",
+        ogg: "audio/ogg",
+        wav: "audio/wav",
+        webm: "audio/webm",
+      };
+
+      res.setHeader("Content-Type", contentTypes[outputFormat] || "audio/mpeg");
+      res.setHeader(
+        "Content-Disposition",
+        `attachment; filename=converted.${outputFormat}`
+      );
+      fileStream.pipe(res);
+
+      fileStream.on("end", () => {
+        // Clean up temporary files
+        try {
+          fs.unlinkSync(inputPath);
+          fs.unlinkSync(outputPath);
+        } catch (err) {
+          console.error("Error cleaning up files:", err);
+        }
+      });
+    })
+    .on("error", (err) => {
+      console.error("FFmpeg error:", err.message);
+      // Clean up input file on error
+      try {
+        fs.unlinkSync(inputPath);
+      } catch (cleanupErr) {
+        console.error("Error cleaning up input file:", cleanupErr);
+      }
+      res.status(500).json({ error: "Audio conversion failed" });
+    })
+    .save(outputPath);
 });
 
 router.post("/calendar-availability", async (req, res) => {
