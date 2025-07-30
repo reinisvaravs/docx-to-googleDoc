@@ -250,8 +250,10 @@ router.post("/calendar-availability", async (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  // Set default values for parameters
-  const { utcOffset = "+3", days = 3 } = req.body;
+  // Set default values for parameters (body is optional)
+  const body = req.body || {};
+  const utcOffset = body.utcOffset || "+3";
+  const days = body.days || 3;
 
   const currentlyConsts = {
     email: "hello@setinbound.com",
