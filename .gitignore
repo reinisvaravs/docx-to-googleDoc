@@ -106,4 +106,8 @@ public
 .DS_Store
 
 # Temporary Google credentials file
-google_creds_temp.json 
+google_creds_temp.json
+
+# Temporary file upload and conversion directories
+uploads/
+converted/ 

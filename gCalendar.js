@@ -315,8 +315,8 @@ export async function scheduleMeeting({
   description = "",
   attendees = [],
   google_service_account_key,
-  google_calendar_email,
 }) {
+  const google_calendar_email = process.env.GOOGLE_CALENDAR_EMAIL;
   console.log("google_calendar_email: ", google_calendar_email);
 
   try {

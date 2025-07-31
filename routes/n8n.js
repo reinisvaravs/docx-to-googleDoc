@@ -4,6 +4,7 @@ import { GoogleAuth } from "google-auth-library";
 import {
   formattedCalendarAvailability,
   minimalCalendarAvailability,
+  scheduleMeeting,
 } from "../gCalendar.js";
 import multer from "multer";
 import ffmpeg from "fluent-ffmpeg";
@@ -14,7 +15,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const router = express.Router();
-const API_SECRET = process.env.API_SECRET;
+const API_SECRET = process.env.API_SECRET; // array of secrets
 const DRIVE_ID = process.env.DRIVE_ID;
 
 // Multer configuration for file uploads
@@ -23,12 +24,6 @@ const upload = multer({ dest: "uploads/" });
 // __dirname replacement for ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
-// Ensure converted folder exists
-const convertedDir = path.join(__dirname, "..", "converted");
-if (!fs.existsSync(convertedDir)) {
-  fs.mkdirSync(convertedDir, { recursive: true });
-}
 
 async function getDriveClient() {
   const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
@@ -45,9 +40,23 @@ async function getDriveClient() {
 // .docx to Google Doc
 router.post("/convert-docx", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
-  if (!apiKey || apiKey !== API_SECRET) {
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
+
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+
+    console.log("apiName:", apiName); // MyAPI
+    console.log("apiId:", apiId); // 12345
+  } else {
+    console.log("Invalid API key format");
+  }
+
   const { from, to, file_id } = req.body;
   if (!from || !to || !file_id) {
     return res
@@ -103,12 +112,31 @@ router.post("/convert-docx", async (req, res) => {
 // Convert audio file to specified format
 router.post("/convert-audio", upload.single("file"), (req, res) => {
   const apiKey = req.headers["x-api-key"];
-  if (!apiKey || apiKey !== API_SECRET) {
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+
+    console.log("apiName:", apiName); // MyAPI
+    console.log("apiId:", apiId); // 12345
+  } else {
+    console.log("Invalid API key format");
   }
 
   if (!req.file) {
     return res.status(400).send("No file uploaded");
+  }
+
+  // Ensure converted folder exists (only when this route is called)
+  const convertedDir = path.join(__dirname, "..", "converted");
+  if (!fs.existsSync(convertedDir)) {
+    fs.mkdirSync(convertedDir, { recursive: true });
   }
 
   // Get output format from query parameter or default to mp3
@@ -190,11 +218,25 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
 // Simple file type checker
 router.post("/identify-file-type", (req, res) => {
   const apiKey = req.headers["x-api-key"];
-  if (!apiKey || apiKey !== API_SECRET) {
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  const { url } = req.body;
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+
+    console.log("apiName:", apiName); // MyAPI
+    console.log("apiId:", apiId); // 12345
+  } else {
+    console.log("Invalid API key format");
+  }
+
+  const body = req.body || {};
+  const { url } = body;
   if (!url) {
     return res.status(400).send("Missing 'url' in request body");
   }
@@ -243,11 +285,79 @@ router.post("/identify-file-type", (req, res) => {
   return res.status(200).json({ type: "unknown", format: "none" });
 });
 
+// Schedule a meeting
+router.post("/schedule-meeting", async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
+    return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+
+    console.log("apiName:", apiName); // MyAPI
+    console.log("apiId:", apiId); // 12345
+  } else {
+    console.log("Invalid API key format");
+  }
+
+  const body = req.body || {};
+  const { start, end, summary, description = "", email } = body;
+
+  if (!start || !end || !summary || !email) {
+    return res
+      .status(400)
+      .send("Missing required parameters: start, end, summary, email");
+  }
+
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+
+    const result = await scheduleMeeting({
+      start,
+      end,
+      summary,
+      description,
+      attendees: [{ email }],
+      google_service_account_key: credentials,
+      google_calendar_email: email,
+    });
+
+    if (result.error) {
+      console.error("Error scheduling meeting:", result.error);
+      return res.status(500).json({ error: result.error });
+    }
+
+    console.log("Meeting scheduled successfully:", result);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("Error in schedule-meeting:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Get calendar availability
 router.post("/calendar-availability", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
-  if (!apiKey || apiKey !== API_SECRET) {
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+
+    console.log("apiName:", apiName); // MyAPI
+    console.log("apiId:", apiId); // 12345
+  } else {
+    console.log("Invalid API key format");
   }
 
   // Set default values for parameters (body is optional)
