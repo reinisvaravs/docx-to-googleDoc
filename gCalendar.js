@@ -303,7 +303,7 @@ export async function formattedCalendarAvailability(
  * @param {Object} options
  * @param {string} options.start - ISO string for start time (e.g. "2025-07-18T09:00:00Z")
  * @param {string} options.end - ISO string for end time (e.g. "2025-07-18T10:00:00Z")
- * @param {string} options.summary - Event title
+ * @param {string} options.reason - Event title
  * @param {string} [options.description] - Event description
  * @param {Array<{email: string}>} [options.attendees] - List of attendee emails
  * @returns {Promise<Object>} - Created event or error
@@ -311,12 +311,12 @@ export async function formattedCalendarAvailability(
 export async function scheduleMeeting({
   start,
   end,
-  summary,
+  reason,
   description = "",
   attendees = [],
   google_service_account_key,
+  google_calendar_email,
 }) {
-  const google_calendar_email = process.env.GOOGLE_CALENDAR_EMAIL;
   console.log("google_calendar_email: ", google_calendar_email);
 
   try {
@@ -332,7 +332,7 @@ export async function scheduleMeeting({
     const calendarId = google_calendar_email;
 
     const event = {
-      summary,
+      reason,
       description,
       start: { dateTime: start, timeZone: "UTC" },
       end: { dateTime: end, timeZone: "UTC" },

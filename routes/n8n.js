@@ -16,7 +16,6 @@ dotenv.config();
 
 const router = express.Router();
 const API_SECRET = process.env.API_SECRET; // array of secrets
-const DRIVE_ID = process.env.DRIVE_ID;
 
 // Multer configuration for file uploads
 const upload = multer({ dest: "uploads/" });
@@ -44,17 +43,8 @@ router.post("/convert-docx", async (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
-  }
+  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
+  const drive_id = config.drive_id;
 
   const { from, to, file_id } = req.body;
   if (!from || !to || !file_id) {
@@ -87,7 +77,7 @@ router.post("/convert-docx", async (req, res) => {
         name: baseName,
         parents: [to],
         mimeType: "application/vnd.google-apps.document",
-        driveId: DRIVE_ID,
+        driveId: drive_id,
       },
       supportsAllDrives: true,
     });
@@ -113,18 +103,6 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
   }
 
   if (!req.file) {
@@ -220,18 +198,6 @@ router.post("/identify-file-type", (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
-  }
-
   const body = req.body || {};
   const { url } = body;
   if (!url) {
@@ -289,17 +255,8 @@ router.post("/direct-calendar-availability", async (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
-  }
+  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
+  const company_email = config.company_email;
 
   // Set default values for parameters (body is optional)
   const body = req.body || {};
@@ -307,7 +264,7 @@ router.post("/direct-calendar-availability", async (req, res) => {
   const days = body.days || 3;
 
   const currentlyConsts = {
-    email: "hello@setinbound.com",
+    email: company_email,
     workStartHour: "9",
     workEndHour: "17",
   };
@@ -340,25 +297,16 @@ router.post("/direct-schedule-meeting", async (req, res) => {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
   }
 
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
-  }
+  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
+  const company_email = config.company_email;
 
   const body = req.body || {};
-  const { start, end, summary, description = "", email } = body;
+  const { start, end, reason, description = "", attendee_email } = body;
 
-  if (!start || !end || !summary || !email) {
+  if (!start || !end || !reason || !attendee_email) {
     return res
       .status(400)
-      .send("Missing required parameters: start, end, summary, email");
+      .send("Missing required parameters: start, end, reason, attendee_email");
   }
 
   try {
@@ -367,11 +315,11 @@ router.post("/direct-schedule-meeting", async (req, res) => {
     const result = await scheduleMeeting({
       start,
       end,
-      summary,
+      reason,
       description,
-      attendees: [{ email }],
+      attendees: [{ attendee_email }],
       google_service_account_key: credentials,
-      google_calendar_email: email,
+      google_calendar_email: company_email,
     });
 
     if (result.error) {
