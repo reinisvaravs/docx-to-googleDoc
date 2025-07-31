@@ -1,11 +1,6 @@
 import express from "express";
 import { google } from "googleapis";
 import { GoogleAuth } from "google-auth-library";
-import {
-  formattedCalendarAvailability,
-  minimalCalendarAvailability,
-  scheduleMeeting,
-} from "../gCalendar.js";
 import multer from "multer";
 import ffmpeg from "fluent-ffmpeg";
 import fs from "fs";
@@ -246,93 +241,6 @@ router.post("/identify-file-type", (req, res) => {
 
   // No recognized extension found
   return res.status(200).json({ type: "unknown", format: "none" });
-});
-
-// Get calendar availability
-router.post("/direct-calendar-availability", async (req, res) => {
-  const apiKey = req.headers["x-api-key"];
-  if (!apiKey || !API_SECRET.includes(apiKey)) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
-  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
-  const company_email = config.company_email;
-
-  // Set default values for parameters (body is optional)
-  const body = req.body || {};
-  const utcOffset = body.utcOffset || "+3";
-  const days = body.days || 3;
-
-  const currentlyConsts = {
-    email: company_email,
-    workStartHour: "9",
-    workEndHour: "17",
-  };
-
-  try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    const result = await formattedCalendarAvailability(
-      utcOffset,
-      days,
-      credentials,
-      currentlyConsts.email,
-      currentlyConsts.workStartHour,
-      currentlyConsts.workEndHour
-    );
-
-    const minimalResult = minimalCalendarAvailability(result);
-    console.log("Calendar availability:", minimalResult);
-
-    res.status(200).json(minimalResult);
-  } catch (error) {
-    console.error("Error testing calendar availability:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Schedule a meeting
-router.post("/direct-schedule-meeting", async (req, res) => {
-  const apiKey = req.headers["x-api-key"];
-  if (!apiKey || !API_SECRET.includes(apiKey)) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
-  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
-  const company_email = config.company_email;
-
-  const body = req.body || {};
-  const { start, end, reason, description = "", attendee_email } = body;
-
-  if (!start || !end || !reason || !attendee_email) {
-    return res
-      .status(400)
-      .send("Missing required parameters: start, end, reason, attendee_email");
-  }
-
-  try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-
-    const result = await scheduleMeeting({
-      start,
-      end,
-      reason,
-      description,
-      attendees: [{ attendee_email }],
-      google_service_account_key: credentials,
-      google_calendar_email: company_email,
-    });
-
-    if (result.error) {
-      console.error("Error scheduling meeting:", result.error);
-      return res.status(500).json({ error: result.error });
-    }
-
-    console.log("Meeting scheduled successfully:", result);
-    res.status(200).json(result);
-  } catch (error) {
-    console.error("Error in schedule-meeting:", error);
-    res.status(500).json({ error: error.message });
-  }
 });
 
 export default router;
