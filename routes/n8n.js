@@ -282,8 +282,59 @@ router.post("/identify-file-type", (req, res) => {
   return res.status(200).json({ type: "unknown", format: "none" });
 });
 
+// Get calendar availability
+router.post("/direct-calendar-availability", async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  if (!apiKey || !API_SECRET.includes(apiKey)) {
+    return res.status(401).send("Unauthorized: Invalid or missing API key");
+  }
+
+  // Match name and ID
+  const match = apiKey.match(/^([^_]+)_(\d+)$/);
+
+  if (match) {
+    const apiName = match[1];
+    const apiId = match[2];
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
+  } else {
+    console.log("Invalid API key format");
+  }
+
+  // Set default values for parameters (body is optional)
+  const body = req.body || {};
+  const utcOffset = body.utcOffset || "+3";
+  const days = body.days || 3;
+
+  const currentlyConsts = {
+    email: "hello@setinbound.com",
+    workStartHour: "9",
+    workEndHour: "17",
+  };
+
+  try {
+    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+    const result = await formattedCalendarAvailability(
+      utcOffset,
+      days,
+      credentials,
+      currentlyConsts.email,
+      currentlyConsts.workStartHour,
+      currentlyConsts.workEndHour
+    );
+
+    const minimalResult = minimalCalendarAvailability(result);
+    console.log("Calendar availability:", minimalResult);
+
+    res.status(200).json(minimalResult);
+  } catch (error) {
+    console.error("Error testing calendar availability:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // Schedule a meeting
-router.post("/schedule-meeting", async (req, res) => {
+router.post("/direct-schedule-meeting", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
   if (!apiKey || !API_SECRET.includes(apiKey)) {
     return res.status(401).send("Unauthorized: Invalid or missing API key");
@@ -332,57 +383,6 @@ router.post("/schedule-meeting", async (req, res) => {
     res.status(200).json(result);
   } catch (error) {
     console.error("Error in schedule-meeting:", error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Get calendar availability
-router.post("/calendar-availability", async (req, res) => {
-  const apiKey = req.headers["x-api-key"];
-  if (!apiKey || !API_SECRET.includes(apiKey)) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
-  // Match name and ID
-  const match = apiKey.match(/^([^_]+)_(\d+)$/);
-
-  if (match) {
-    const apiName = match[1];
-    const apiId = match[2];
-    console.log("API Name:", apiName); // name
-    console.log(`API ID: ${apiId && "found successfully"}`); // id
-  } else {
-    console.log("Invalid API key format");
-  }
-
-  // Set default values for parameters (body is optional)
-  const body = req.body || {};
-  const utcOffset = body.utcOffset || "+3";
-  const days = body.days || 3;
-
-  const currentlyConsts = {
-    email: "hello@setinbound.com",
-    workStartHour: "9",
-    workEndHour: "17",
-  };
-
-  try {
-    const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS);
-    const result = await formattedCalendarAvailability(
-      utcOffset,
-      days,
-      credentials,
-      currentlyConsts.email,
-      currentlyConsts.workStartHour,
-      currentlyConsts.workEndHour
-    );
-
-    const minimalResult = minimalCalendarAvailability(result);
-    console.log("Calendar availability:", minimalResult);
-
-    res.status(200).json(minimalResult);
-  } catch (error) {
-    console.error("Error testing calendar availability:", error);
     res.status(500).json({ error: error.message });
   }
 });
