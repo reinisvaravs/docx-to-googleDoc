@@ -50,9 +50,8 @@ router.post("/convert-docx", async (req, res) => {
   if (match) {
     const apiName = match[1];
     const apiId = match[2];
-
-    console.log("apiName:", apiName); // MyAPI
-    console.log("apiId:", apiId); // 12345
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
   } else {
     console.log("Invalid API key format");
   }
@@ -122,9 +121,8 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
   if (match) {
     const apiName = match[1];
     const apiId = match[2];
-
-    console.log("apiName:", apiName); // MyAPI
-    console.log("apiId:", apiId); // 12345
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
   } else {
     console.log("Invalid API key format");
   }
@@ -228,9 +226,8 @@ router.post("/identify-file-type", (req, res) => {
   if (match) {
     const apiName = match[1];
     const apiId = match[2];
-
-    console.log("apiName:", apiName); // MyAPI
-    console.log("apiId:", apiId); // 12345
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
   } else {
     console.log("Invalid API key format");
   }
@@ -298,9 +295,8 @@ router.post("/schedule-meeting", async (req, res) => {
   if (match) {
     const apiName = match[1];
     const apiId = match[2];
-
-    console.log("apiName:", apiName); // MyAPI
-    console.log("apiId:", apiId); // 12345
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
   } else {
     console.log("Invalid API key format");
   }
@@ -353,9 +349,8 @@ router.post("/calendar-availability", async (req, res) => {
   if (match) {
     const apiName = match[1];
     const apiId = match[2];
-
-    console.log("apiName:", apiName); // MyAPI
-    console.log("apiId:", apiId); // 12345
+    console.log("API Name:", apiName); // name
+    console.log(`API ID: ${apiId && "found successfully"}`); // id
   } else {
     console.log("Invalid API key format");
   }
