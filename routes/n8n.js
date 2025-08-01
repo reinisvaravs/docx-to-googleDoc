@@ -82,9 +82,6 @@ router.post("/convert-docx", async (req, res) => {
     // Move the original file to the "to" folder
     await drive.files.update({
       fileId: file_id,
-      requestBody: {
-        parents: [to],
-      },
       addParents: to,
       removeParents: from,
       supportsAllDrives: true,
