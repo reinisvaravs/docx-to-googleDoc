@@ -65,18 +65,31 @@ router.post("/convert-docx", async (req, res) => {
       return res.status(400).send("File is not a .docx in the source folder");
     }
     const baseName = file.name.replace(/\.docx$/, "");
-    // Convert/copy the file as Google Doc into the destination folder
+
+    // Convert/copy the file as Google Doc into the "from" folder
     const copyRes = await drive.files.copy({
       fileId: file_id,
       requestBody: {
         name: baseName,
-        parents: [to],
+        parents: [from],
         mimeType: "application/vnd.google-apps.document",
         driveId: drive_id,
       },
       supportsAllDrives: true,
     });
     const newFile = copyRes.data;
+
+    // Move the original file to the "to" folder
+    await drive.files.update({
+      fileId: file_id,
+      requestBody: {
+        parents: [to],
+      },
+      addParents: to,
+      removeParents: from,
+      supportsAllDrives: true,
+    });
+
     // Build metadata with url
     let url = `https://docs.google.com/document/d/${newFile.id}/edit`;
     const metadata = {
