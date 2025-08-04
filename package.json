@@ -12,7 +12,6 @@
   "type": "module",
   "dependencies": {
     "@google-cloud/local-auth": "^2.1.1",
-    "@supabase/supabase-js": "^2.53.0",
     "dotenv": "^17.2.1",
     "express": "^5.1.0",
     "fluent-ffmpeg": "^2.1.3",
