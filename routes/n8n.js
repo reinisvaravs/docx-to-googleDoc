@@ -7,10 +7,16 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
+import { createClient } from "@supabase/supabase-js";
 dotenv.config();
 
 const router = express.Router();
 const API_SECRET = process.env.API_SECRET; // array of secrets
+
+// Supabase client initialization
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
 
 // Multer configuration for file uploads
 const upload = multer({ dest: "uploads/" });
@@ -34,10 +40,6 @@ async function getDriveClient() {
 // .docx to Google Doc
 router.post("/convert-docx", async (req, res) => {
   const apiKey = req.headers["x-api-key"];
-  if (!apiKey || !API_SECRET.includes(apiKey)) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
   const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
   const drive_id = config.drive_id;
 
@@ -105,11 +107,6 @@ router.post("/convert-docx", async (req, res) => {
 
 // Convert audio file to specified format
 router.post("/convert-audio", upload.single("file"), (req, res) => {
-  const apiKey = req.headers["x-api-key"];
-  if (!apiKey || !API_SECRET.includes(apiKey)) {
-    return res.status(401).send("Unauthorized: Invalid or missing API key");
-  }
-
   if (!req.file) {
     return res.status(400).send("No file uploaded");
   }
@@ -194,6 +191,58 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
       res.status(500).json({ error: "Audio conversion failed" });
     })
     .save(outputPath);
+});
+
+router.post("/get-convo", async (req, res) => {
+  try {
+    const { session_id } = req.body;
+
+    // Validate input
+    if (!session_id) {
+      return res.status(400).json({
+        error: "Missing session_id in request body",
+        message: "Please provide a valid session_id",
+      });
+    }
+
+    // Query the database using Supabase
+    const { data, error } = await supabase
+      .from("formatted_history")
+      .select("all_history, source, summary, created_at")
+      .eq("session_id", session_id)
+      .single();
+
+    if (error) {
+      console.error("[API] Supabase error:", error);
+      return res.status(500).json({
+        error: "Database query failed",
+        message: error.message,
+      });
+    }
+
+    if (!data) {
+      return res.status(404).json({
+        error: "Session not found",
+        message: `No conversation found for session_id: ${session_id}`,
+      });
+    }
+
+    // Return the conversation data
+    res.status(200).json({
+      success: true,
+      session_id,
+      conversation: data.all_history,
+      source: data.source,
+      summary: data.summary,
+      created_at: data.created_at,
+    });
+  } catch (err) {
+    console.error("[API] Error in /get-convo:", err.stack || err);
+    res.status(500).json({
+      error: "Internal server error",
+      message: "Failed to retrieve conversation",
+    });
+  }
 });
 
 export default router;
