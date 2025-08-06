@@ -218,11 +218,10 @@ router.post("/get_message_by_id", async (req, res) => {
 
   for (let i = 1; i < output.length; i++) {
     if (output[output.length - i].message_id === message_id) {
-      res.status(200).json(output[output.length - i].content);
-      break;
+      return res.status(200).json(output[output.length - i].content);
     }
   }
-  res.status(200).json({ content: "Message not found" });
+  return res.status(200).json({ content: "Message not found" });
 });
 
 export default router;
