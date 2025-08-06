@@ -186,4 +186,40 @@ router.post("/convert-audio", upload.single("file"), (req, res) => {
     .save(outputPath);
 });
 
+router.post("/get_message_by_id", async (req, res) => {
+  const apiKey = req.headers["x-api-key"];
+  const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
+  const SUPABASE_API_KEY = config.SUPABASE_API_KEY;
+
+  const { message_id, session_Id } = req.body;
+  if (!message_id || !session_Id) {
+    return res
+      .status(400)
+      .send("Missing message_id or session_Id in request body");
+  }
+
+  console.log(message_id, session_Id);
+
+  const response = await fetch(
+    `https://dkpougltgangqvyyuzha.supabase.co/rest/v1/formatted_history?session_id=eq.${session_Id}&select=all_history`,
+    {
+      headers: {
+        apikey: SUPABASE_API_KEY,
+        Authorization: `Bearer ${SUPABASE_API_KEY}`,
+      },
+    }
+  );
+
+  const data = await response.json();
+
+  const output = data[0].all_history;
+
+  for (let i = 1; i < output.length; i++) {
+    if (output[output.length - i].message_id === message_id) {
+      res.status(200).json(output[output.length - i].content);
+      break;
+    }
+  }
+});
+
 export default router;
