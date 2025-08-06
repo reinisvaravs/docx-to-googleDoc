@@ -191,19 +191,19 @@ router.post("/get_message_by_id", async (req, res) => {
   const config = JSON.parse(process.env.ALL_CONFIGS)[apiKey];
   const SUPABASE_API_KEY = config.SUPABASE_API_KEY;
 
-  const { message_id, session_Id } = req.body;
-  console.log(message_id, session_Id);
+  const { message_id, session_id } = req.body;
+  console.log(message_id, session_id);
 
-  if (!message_id || !session_Id) {
+  if (!message_id || !session_id) {
     return res
       .status(400)
-      .send("Missing message_id or session_Id in request body");
+      .send("Missing message_id or session_id in request body");
   }
 
-  console.log(message_id, session_Id);
+  console.log(message_id, session_id);
 
   const response = await fetch(
-    `https://dkpougltgangqvyyuzha.supabase.co/rest/v1/formatted_history?session_id=eq.${session_Id}&select=all_history`,
+    `https://dkpougltgangqvyyuzha.supabase.co/rest/v1/formatted_history?session_id=eq.${session_id}&select=all_history`,
     {
       headers: {
         apikey: SUPABASE_API_KEY,
@@ -218,7 +218,7 @@ router.post("/get_message_by_id", async (req, res) => {
 
   for (let i = 1; i < output.length; i++) {
     if (output[output.length - i].message_id === message_id) {
-      res.status(200).json({ content: output[output.length - i] });
+      res.status(200).json(output[output.length - i].content);
       break;
     }
   }
