@@ -192,6 +192,8 @@ router.post("/get_message_by_id", async (req, res) => {
   const SUPABASE_API_KEY = config.SUPABASE_API_KEY;
 
   const { message_id, session_Id } = req.body;
+  console.log(message_id, session_Id);
+
   if (!message_id || !session_Id) {
     return res
       .status(400)
@@ -216,7 +218,7 @@ router.post("/get_message_by_id", async (req, res) => {
 
   for (let i = 1; i < output.length; i++) {
     if (output[output.length - i].message_id === message_id) {
-      res.status(200).json(output[output.length - i].content);
+      res.status(200).json(output[output.length - i]);
       break;
     }
   }
