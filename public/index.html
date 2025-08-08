@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reinis Varavs API Server API Server</title>
+  </head>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #fafafa;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        sans-serif;
+      color: #333;
+      padding: 2rem;
+    }
+
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 1rem;
+      font-weight: 500;
+      font-size: 1.8rem;
+    }
+
+    p {
+      color: #6c757d;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      font-size: 0.9rem;
+    }
+
+    .endpoints {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+      width: 100%;
+      max-width: 1200px;
+    }
+
+    .endpoint {
+      background: white;
+      padding: 1.2rem;
+      border-radius: 6px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      border-left: 3px solid #007bff;
+    }
+
+    .endpoint h3 {
+      color: #007bff;
+      font-size: 1rem;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .endpoint p {
+      color: #6c757d;
+      font-size: 0.8rem;
+      margin-bottom: 0.8rem;
+      text-align: left;
+    }
+
+    .details {
+      font-size: 0.75rem;
+      color: #495057;
+    }
+
+    .details strong {
+      color: #007bff;
+    }
+
+    ul {
+      list-style: none;
+      margin: 0;
+    }
+
+    li {
+      margin-bottom: 0.3rem;
+      font-size: 0.75rem;
+    }
+  </style>
+  <body>
+    <h1>Reinis Varavs API Server</h1>
+    <p>
+      Available endpoints for document conversion, audio processing, and message
+      retrieval
+    </p>
+
+    <div class="endpoints">
+      <div class="endpoint">
+        <h3>/n8n/convert-docx</h3>
+        <p>
+          Convert .docx files to Google Docs in your Google Drive. Moves
+          original files to destination folder and creates new Google Docs in
+          source folder. Essential for automation workflows since most platforms
+          cannot extract content from .docx files directly.
+        </p>
+        <div class="details">
+          <strong>Headers:</strong>
+          <ul>
+            <li>x-api-key: Your API key</li>
+            <li>Content-Type: application/json</li>
+          </ul>
+          <strong>Body:</strong>
+          <ul>
+            <li>from: Source folder ID</li>
+            <li>to: Destination folder ID</li>
+            <li>file_id: Google Drive file ID</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="endpoint">
+        <h3>/n8n/convert-audio</h3>
+        <p>
+          Convert audio files between various formats. Accepts input formats:
+          flac, m4a, mp3, mp4, mpeg, mpga, oga, ogg, wav, webm. Useful for
+          converting audio to Whisper-1 compatible formats for transcription
+          (mp3, mp4, mpeg, mpga, m4a, wav, webm, ogg, opus).
+        </p>
+        <div class="details">
+          <strong>Headers:</strong>
+          <ul>
+            <li>x-api-key: Your API key</li>
+          </ul>
+          <strong>Body:</strong>
+          <ul>
+            <li>file: Audio file (multipart/form-data)</li>
+          </ul>
+          <strong>Query:</strong>
+          <ul>
+            <li>format: Output format (optional, defaults to mp3)</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="endpoint">
+        <h3>/n8n/get_message_by_id</h3>
+        <p>Retrieve specific messages by ID from conversation history</p>
+        <div class="details">
+          <strong>Headers:</strong>
+          <ul>
+            <li>x-api-key: Your API key</li>
+            <li>Content-Type: application/json</li>
+          </ul>
+          <strong>Body:</strong>
+          <ul>
+            <li>message_id: The ID of the message to retrieve</li>
+            <li>session_id: The session ID for the conversation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
