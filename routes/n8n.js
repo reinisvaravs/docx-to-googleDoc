@@ -12,7 +12,22 @@ dotenv.config();
 const router = express.Router();
 
 // Multer configuration for file uploads
-const upload = multer({ dest: "uploads/" });
+const upload = multer({
+  dest: "uploads/",
+  storage: multer.diskStorage({
+    destination: function (req, file, cb) {
+      // Create uploads directory if it doesn't exist
+      const uploadDir = "uploads/";
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+      cb(null, file.originalname);
+    },
+  }),
+});
 
 // __dirname replacement for ESM
 const __filename = fileURLToPath(import.meta.url);
