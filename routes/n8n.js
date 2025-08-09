@@ -8,6 +8,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import dotenv from "dotenv";
 dotenv.config();
+import { formattedCalendarAvailability } from "../gCalendar.js";
 
 const router = express.Router();
 
@@ -241,6 +242,78 @@ router.post("/get_message_by_id", async (req, res) => {
     }
   }
   return res.status(200).json({ content: "Message not found" });
+});
+
+router.post("/get_calendar_availability", async (req, res) => {
+  try {
+    const apiKey = req.headers["x-api-key"];
+    const allConfigs = JSON.parse(process.env.ALL_CONFIGS || "{}");
+    const config = (allConfigs && allConfigs[apiKey]) || {};
+
+    // Compute default UTC offset for Europe/Riga right now (DST-aware)
+    const computeRigaOffsetHours = (date = new Date()) => {
+      const riga = new Date(
+        date.toLocaleString("en-US", { timeZone: "Europe/Riga" })
+      );
+      const utc = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
+      return (riga.getTime() - utc.getTime()) / (60 * 60 * 1000);
+    };
+    const defaultTimeZone = "Europe/Riga";
+
+    const {
+      utc = config.utc ?? computeRigaOffsetHours(),
+      days = config.calendar_days ?? 7,
+      work_start_hour = config.work_start_hour ?? 9,
+      work_end_hour = config.work_end_hour ?? 17,
+      google_calendar_email: bodyCalendarEmail,
+      google_service_account_key: bodyServiceAccountKey,
+    } = req.body || {};
+
+    const google_calendar_email =
+      bodyCalendarEmail ||
+      config.google_calendar_email ||
+      process.env.GOOGLE_CALENDAR_EMAIL;
+    let google_service_account_key =
+      bodyServiceAccountKey ||
+      config.google_service_account_key ||
+      process.env.GOOGLE_CREDENTIALS;
+
+    if (!google_calendar_email || !google_service_account_key) {
+      return res.status(400).json({
+        error:
+          "Missing google_calendar_email or google_service_account_key in request body or config",
+      });
+    }
+
+    let serviceAccountKeyObject = google_service_account_key;
+    if (typeof serviceAccountKeyObject === "string") {
+      try {
+        serviceAccountKeyObject = JSON.parse(serviceAccountKeyObject);
+      } catch (e) {
+        return res.status(400).json({
+          error:
+            "google_service_account_key must be a valid JSON object or JSON string",
+        });
+      }
+    }
+
+    const availability = await formattedCalendarAvailability(
+      defaultTimeZone,
+      Number(days),
+      serviceAccountKeyObject,
+      google_calendar_email,
+      Number(work_start_hour),
+      Number(work_end_hour)
+    );
+
+    return res.status(200).json(availability);
+  } catch (err) {
+    console.error(
+      "[API] Error in /get_calendar_availability:",
+      err.stack || err
+    );
+    return res.status(500).json({ error: err.message || String(err) });
+  }
 });
 
 export default router;
